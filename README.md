@@ -6,4 +6,4 @@
 
 
 Run code: gcc third.c -lpthread
-//hanya bisa dijalankan di windows
+//hanya bisa dijalankan di windows karena menggunakan header windows.h dan conio.h
