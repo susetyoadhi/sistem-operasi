@@ -6,7 +6,7 @@
 1903559 Muhammad Agil Perdana
 1907715	Muhammad Iqbal Rynaldi
 1907793 Muhammad Azriel Cahya P
-
+kelompok : HolyC
 
 
 Run code: gcc third.c -lpthread
