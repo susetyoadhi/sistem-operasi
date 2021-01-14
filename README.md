@@ -1,9 +1,12 @@
 # sistem-operasi
 
-1903287 - Adhi Susetyo Pramesywara
+
 1900618 Diffa Al Farrisztqi
-1907793 Muhammad Azriel Cahya P
+1903287 Adhi Susetyo Pramesywara
 1903559 Muhammad Agil Perdana
+1907715	Muhammad Iqbal Rynaldi
+1907793 Muhammad Azriel Cahya P
+
 
 
 Run code: gcc third.c -lpthread
