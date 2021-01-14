@@ -1,51 +1,34 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include <Windows.h>
+#include <Windows.h>//koordinat di terminal
 #include <conio.h>
-// #include <pthread.h>
 #include <time.h>
 
-#define MAP_SIZE_W 15
-#define MAP_SIZE_H 25
-#define HALF_W 20
+#define MAP_SIZE_W 15 //ukuran lebar
+#define MAP_SIZE_H 25 //ukuran tinggi
+#define HALF_W 20 //posisi untuk block berikutnya
 #define HALF_H 10
 #define EXIT 100
 
-#define WALL 5
-#define EMPTY 0
-#define BLOCK 1
+#define EMPTY 0 //kalau kosong
+#define BLOCK 1 //kalau ada di koordinat
 
-#define UP 72
-#define LEFT 75
-#define RIGHT 77
-#define SPACE 32
+#define UP 72 //input untuk arrow up
+#define LEFT 75 //arrow left
+#define RIGHT 77 // arrow right
 #define ESC 27
 #define DOWN 80
 
-#define kiri 1
-#define kanan 2
-#define atas 3
+typedef char MData ;//typedef untuk menampung data peta
 
-typedef char MData ;
-
-typedef struct _currentlocation{
+typedef struct _currentlocation{//struct untuk koordinat block
     int X;
     int Y;
 } Location;
 
-
-//hide cursor
-void hidecursor() {
-    HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_CURSOR_INFO info;
-    info.dwSize = 100;
-    info.bVisible = FALSE;
-    SetConsoleCursorInfo(consoleHandle, &info);
-}
-
 //move cursor.
-void gotoxy(int x, int y){
+void gotoxy(int x, int y){//merubah posisi untuk output
     COORD P;
     P.X = 2*x;
     P.Y = y;
@@ -53,7 +36,7 @@ void gotoxy(int x, int y){
 }
 
 //get keyboard input.
-int getKeyDown(){
+int getKeyDown(){//input keyboard
     if(kbhit()) return getch();
     else {
         return -1;
@@ -61,7 +44,7 @@ int getKeyDown(){
 }
 
 //////////////////////////////////////////////////DRAW/////////////////////////////////////////////////////////////////
-void drawWall(){
+void drawWall(){//menggambar tembok
     int h, w;
     HANDLE hand = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hand, 11);
@@ -97,7 +80,7 @@ void drawWall(){
     SetConsoleTextAttribute(hand, 7);
 }
 
-int drawFrontMenu(){
+int drawFrontMenu(){//menu awal
     HANDLE hand = GetStdHandle(STD_OUTPUT_HANDLE);
     int keyInput;
     gotoxy(1,2);
@@ -112,11 +95,11 @@ int drawFrontMenu(){
 
     SetConsoleTextAttribute(hand, 14);
     gotoxy(2,6);
-    printf("Left : a \n");
+    printf("Left :  \n");
     gotoxy(2,7);
-    printf("Right : d \n");
+    printf("Right :  \n");
     gotoxy(2,8);
-    printf("Rotation : w \n");
+    printf("Rotation :  \n");
     gotoxy(2,9);
     gotoxy(2,10);
     printf("Exit: 't' \n");
@@ -141,7 +124,7 @@ int drawFrontMenu(){
     return keyInput;
 }
 
-void drawMap(MData map[MAP_SIZE_H][MAP_SIZE_W]){
+void drawMap(MData map[MAP_SIZE_H][MAP_SIZE_W]){//menggambar peta untuk block
     int h, w;
     HANDLE hand = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -149,10 +132,10 @@ void drawMap(MData map[MAP_SIZE_H][MAP_SIZE_W]){
         for(w=0; w<MAP_SIZE_W; w++){
             gotoxy(w+2,h+2);
             if(map[h][w] == EMPTY){
-                printf(" ");
+                printf(" ");//jika kosong ouput spasi
             }else if(map[h][w] == BLOCK){
                 SetConsoleTextAttribute(hand, 14);
-                printf("%c", 254);
+                printf("%c", 254);//jika ada ouput block
                 SetConsoleTextAttribute(hand, 7);
             }
         }
@@ -160,8 +143,8 @@ void drawMap(MData map[MAP_SIZE_H][MAP_SIZE_W]){
     }
 
 }
-//show next shape, score, time, best score.
-void drawSubMap(int best, int score){
+
+void drawSubMap(int best, int score){//untuk peta block berikutnya
     HANDLE hand = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hand, 14);
     gotoxy(HALF_W + 4, HALF_H+1);
@@ -171,12 +154,12 @@ void drawSubMap(int best, int score){
     SetConsoleTextAttribute(hand, 7);
 }
 
-void drawSubShape(MData map[MAP_SIZE_H][MAP_SIZE_W],int shape[4][4]){
+void drawSubShape(MData map[MAP_SIZE_H][MAP_SIZE_W],int shape[4][4]){//untuk block berikutnya
     int h, w;
     HANDLE hand = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    for(h=3; h<=6 ;h++){
-        for(w=HALF_W+1 ; w<=HALF_W+4; w++){
+    for(h=3; h<=6 ;h++){//dimulait di baris ke 3
+        for(w=HALF_W+1 ; w<=HALF_W+4; w++){//line
                 gotoxy(w, h);
                 printf(" ");
 
@@ -196,7 +179,7 @@ void drawSubShape(MData map[MAP_SIZE_H][MAP_SIZE_W],int shape[4][4]){
     }
 }
 
-void drawShape(MData map[MAP_SIZE_H][MAP_SIZE_W],int shape[4][4], Location curLoc){
+void drawShape(MData map[MAP_SIZE_H][MAP_SIZE_W],int shape[4][4], Location curLoc){//memindahkan data balok ke peta
     int h, w;
 
     for(h=0; h<4;h++){
@@ -211,7 +194,7 @@ void drawShape(MData map[MAP_SIZE_H][MAP_SIZE_W],int shape[4][4], Location curLo
 
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void startTime(){
+void startTime(){//start time
     int i;
     HANDLE hand = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -226,7 +209,7 @@ void startTime(){
     printf("                       ");
 }
 
-void mapInit(MData map[MAP_SIZE_H][MAP_SIZE_W]){
+void mapInit(MData map[MAP_SIZE_H][MAP_SIZE_W]){//mengosongkan data peta
     int i, j=0;
     for(i=0;i<MAP_SIZE_H;i++){
         for(j=0; j<MAP_SIZE_W; j++){
@@ -235,12 +218,12 @@ void mapInit(MData map[MAP_SIZE_H][MAP_SIZE_W]){
     }
 }
 
-void locationInit(Location * curLoc){
+void locationInit(Location * curLoc){ //lokasi awal
     curLoc->X =3;
     curLoc->Y =0;
 }
 
-void copyBlock(int blockShape[4][4], int copy[4][4]){
+void copyBlock(int blockShape[4][4], int copy[4][4]){//memindahkan data block
     int i, j;
     for(i=0;i<4;i++){
         for(j=0; j<4;j++){
@@ -249,7 +232,7 @@ void copyBlock(int blockShape[4][4], int copy[4][4]){
     }
 }
 
-void setBlock(int blockShape[4][4]){
+void setBlock(int blockShape[4][4]){//merandom block
 
     int shape[7][4][4] = {
             {{0,1,0,0},{0,1,0,0},{0,1,0,0},{0,1,0,0}},//I
@@ -269,7 +252,7 @@ void setBlock(int blockShape[4][4]){
     int shapeNienun[4][4] = {{0,0,0,0},{0,1,0,0},{0,1,1,1},{0,0,0,0}};
     int shapeRNieun[4][4] = {{0,0,0,0},{0,1,1,1},{0,1,0,0},{0,0,0,0}};
 */
-    srand((unsigned int)(time(NULL)));
+    srand((unsigned int)(time(NULL)));//random
 
     switch(rand()%7) {
         case 0:
@@ -298,18 +281,18 @@ void setBlock(int blockShape[4][4]){
     }
 }
 
-////////////////////////////////////////////////////////////////////!ah//////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////
 void removeShape(MData map[MAP_SIZE_H][MAP_SIZE_W], int blockShape[4][4], Location * curLoc){
     int h, w;
     for(h=0; h<4;h++){
         for(w=0; w<4;w++){
             if(blockShape[h][w] == BLOCK)
-                map[curLoc->Y + h][curLoc->X + w]=EMPTY;
+                map[curLoc->Y + h][curLoc->X + w]=EMPTY; //menghapus block saat turun
         }
     }
 }
 
-int getShapeLeftLoc(int blockShape[4][4]){
+int getShapeLeftLoc(int blockShape[4][4]){//mengambil posisi block kiri
     int h, w, leftW=4;
     for(w=0; w<4;w++){
         for(h=0; h<4;h++){
@@ -321,7 +304,7 @@ int getShapeLeftLoc(int blockShape[4][4]){
     }
     return leftW;
 }
-int getShapeRightLoc(int blockShape[4][4]){
+int getShapeRightLoc(int blockShape[4][4]){//mengambil posisi block kanan
     int h, w, rightW=0;
     for(w=3; w>=0;w--){
         for(h=3; h>=0;h--){
@@ -333,7 +316,8 @@ int getShapeRightLoc(int blockShape[4][4]){
     }
     return rightW+1;
 }
-int getShapeBottomLoc(int blockShape[4][4]){
+
+int getShapeBottomLoc(int blockShape[4][4]){//mengambil posisi block bawah
     int h, w, bottomH=0;
     for(w=3; w>=0;w--){
         for(h=3; h>=0;h--){
@@ -345,6 +329,7 @@ int getShapeBottomLoc(int blockShape[4][4]){
     }
     return bottomH+1;
 }
+
 int getEachBottomLoc(int blockShape[4][4], int w){
     int h, bottomH=-1;
     for(h=3; h>=0;h--){
@@ -375,27 +360,28 @@ int getEachRightLoc(int blockShape[4][4], int h){
     }
     return rightW;
 }
-void goLeft(MData map[MAP_SIZE_H][MAP_SIZE_W],int blockShape[4][4], Location *curLoc){
+
+void goLeft(MData map[MAP_SIZE_H][MAP_SIZE_W],int blockShape[4][4], Location *curLoc){//prosedur untuk bergerak ke kiri
     int leftW = getShapeLeftLoc(blockShape);
     int boundaryArr[4] ={0};
     int i;
     for(i=0; i<4;i++){
         boundaryArr[i] = getEachLeftLoc(blockShape, i);
-
     }
+    
     if((curLoc->X) + leftW > 0){
-        if(!((boundaryArr[0] != 5 && map[curLoc->Y][curLoc->X + boundaryArr[0] -1] != EMPTY)
+        if(!((boundaryArr[0] != 5 && map[curLoc->Y][curLoc->X + boundaryArr[0] -1] != EMPTY)//untuk koordinat tiap bentuk balok
            ||(boundaryArr[1] != 5 && map[curLoc->Y +1][curLoc->X + boundaryArr[1] -1] != EMPTY)
            ||(boundaryArr[2] != 5 && map[curLoc->Y +2][curLoc->X + boundaryArr[2] -1] != EMPTY)
            ||(boundaryArr[3] != 5 && map[curLoc->Y +3][curLoc->X + boundaryArr[3] -1] != EMPTY))){
 
             removeShape(map, blockShape,curLoc);
-            (curLoc->X)--;
+            (curLoc->X)--;//mengurangi koordinat x / horizontal
         }
     }
 }
 
-void goRight(MData map[MAP_SIZE_H][MAP_SIZE_W],int blockShape[4][4], Location *curLoc){
+void goRight(MData map[MAP_SIZE_H][MAP_SIZE_W],int blockShape[4][4], Location *curLoc){//prosedur untuk bergerak ke kanan
     int rightW = getShapeRightLoc(blockShape);
     int boundaryArr[4] ={0};
     int i;
@@ -411,32 +397,33 @@ void goRight(MData map[MAP_SIZE_H][MAP_SIZE_W],int blockShape[4][4], Location *c
              ||(boundaryArr[3] != 5 && map[curLoc->Y +3][curLoc->X + boundaryArr[3] +1] != EMPTY))){
 
             removeShape(map, blockShape,curLoc);
-            (curLoc->X)++;
+            (curLoc->X)++;//menambah koordinat x / horizontal
         }
 
     }
 }
 
-int fixShape(MData map[MAP_SIZE_H][MAP_SIZE_W], int blockShape[4][4], Location *curLoc){
+int fixShape(MData map[MAP_SIZE_H][MAP_SIZE_W], int blockShape[4][4], Location *curLoc){//memperbaiki bentuk block
     int w, h;
     for(w=0; w<4; w++){
         for(h=0; h<4 ; h++){
-            if(blockShape[h][w] ==1){
+            if(blockShape[h][w] == 1){
                 map[curLoc->Y+ h][curLoc->X +w]=BLOCK;
             }
         }
     }
 }
 
-int goDown(MData map[MAP_SIZE_H][MAP_SIZE_W], int blockShape[4][4], Location *curLoc){
+int goDown(MData map[MAP_SIZE_H][MAP_SIZE_W], int blockShape[4][4], Location *curLoc){//prosedur untuk turun
     int bottomH = getShapeBottomLoc(blockShape);
     int bottomArr[4] = {0};
     int i;
     for(i=0; i<4; i++){
         bottomArr[i] = getEachBottomLoc(blockShape, i);
     }
+    
     if(curLoc->Y + bottomH  == MAP_SIZE_H
-       ||(bottomArr[1] != -1 && map[curLoc->Y + bottomArr[1] +1][curLoc->X + 1] != EMPTY)
+       ||(bottomArr[1] != -1 && map[curLoc->Y + bottomArr[1] +1][curLoc->X + 1] != EMPTY)//posisi block paling bawah
        ||(bottomArr[0] != -1 && map[curLoc->Y + bottomArr[0] +1][curLoc->X + 0] != EMPTY)
        ||(bottomArr[3] != -1 && map[curLoc->Y + bottomArr[3] +1][curLoc->X + 3] != EMPTY)
        ||(bottomArr[2] != -1 && map[curLoc->Y + bottomArr[2] +1][curLoc->X + 2] != EMPTY)
@@ -449,21 +436,21 @@ int goDown(MData map[MAP_SIZE_H][MAP_SIZE_W], int blockShape[4][4], Location *cu
     }
 
 
-    if(curLoc->Y + bottomH < MAP_SIZE_H){
+    if(curLoc->Y + bottomH < MAP_SIZE_H){//selama belum sampai bawah
         removeShape(map, blockShape, curLoc);
-        Sleep(1000/8);
-        (curLoc->Y)++;
+        Sleep(1000/8);//sleep
+        (curLoc->Y)++;//koordinat y / vertikal bertambah
     }
 
     return FALSE;
 }
 
-void rotate(MData map[MAP_SIZE_H][MAP_SIZE_W],int blockShape[4][4], Location *curLoc){
+void rotate(MData map[MAP_SIZE_H][MAP_SIZE_W],int blockShape[4][4], Location *curLoc){//untuk memutar balok
     int i, j;
     int tmp[4][4];
     int leftW, rightW, bottomH;
 
-    for(i=0; i<4;i++){
+    for(i=0; i<4;i++){//menggunakan prosedur memutar matriks dengan mempertimbangkan lokasi dari tiap balok
         for(j=0; j<4;j++){
             if(blockShape[i][j] == BLOCK){
                 tmp[j][3-i] = blockShape[i][j];
@@ -483,7 +470,8 @@ void rotate(MData map[MAP_SIZE_H][MAP_SIZE_W],int blockShape[4][4], Location *cu
     }
 
 
-    //(when rotate near the wall.
+    //saat diputar di dekat tembok
+    //menyesuaikan balok tersebut dengan tembok agar tidak tercampur / error di block
     leftW= getShapeLeftLoc(blockShape);
     if(curLoc->X + leftW <0){
         goRight(map, blockShape, curLoc);
@@ -506,21 +494,21 @@ void rotate(MData map[MAP_SIZE_H][MAP_SIZE_W],int blockShape[4][4], Location *cu
 }
 
 
-void deleteLine(MData map[MAP_SIZE_H][MAP_SIZE_W], int h){
+void deleteLine(MData map[MAP_SIZE_H][MAP_SIZE_W], int h){//menghapus garis saat sudah penuh
     int w;
     for(w=0 ; w < MAP_SIZE_W ; w++){
         map[h][w] = EMPTY;
     }
 }
 
-void addline (MData map[MAP_SIZE_H][MAP_SIZE_W], int h){
+void addline (MData map[MAP_SIZE_H][MAP_SIZE_W], int h){//menambahkan garis
     int w;
     for(w=0 ; w < MAP_SIZE_W ; w++){
         map[h][w] = BLOCK;
     }
 }
 
-void organizeLine(MData map[MAP_SIZE_H][MAP_SIZE_W], int h){
+void organizeLine(MData map[MAP_SIZE_H][MAP_SIZE_W], int h){//mengisi baris yang kosong saat garis dihapus
     int w;
     while(h > 1){
         for(w=0; w<MAP_SIZE_W;w++){
@@ -530,7 +518,7 @@ void organizeLine(MData map[MAP_SIZE_H][MAP_SIZE_W], int h){
     }
 }
 
-void checkLine(MData map[MAP_SIZE_H][MAP_SIZE_W], Location curLoc, int * score){
+void checkLine(MData map[MAP_SIZE_H][MAP_SIZE_W], Location curLoc, int * score){//mengecek baris jika baris tersebut sudah penuh
     int h, w, full, count =0;
 
     for(h=MAP_SIZE_H ; h >= (curLoc.Y -1); h--){
@@ -543,7 +531,7 @@ void checkLine(MData map[MAP_SIZE_H][MAP_SIZE_W], Location curLoc, int * score){
             }
         }
 
-        if(full == MAP_SIZE_W){
+        if(full == MAP_SIZE_W){//jika penuh
             (*score) += 100;
             deleteLine(map, h);
             drawMap(map);
@@ -589,7 +577,7 @@ int GameOver(MData map[MAP_SIZE_H][MAP_SIZE_W],int score, int bestScore){
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void *GameStart(void *args){
+void *GameStart(void *args){//thread untuk program utama
     char map[MAP_SIZE_H][MAP_SIZE_W] = {0};
     int key;
     int reachBottom = FALSE;
@@ -664,10 +652,9 @@ int main() {
     system("cls");
     char map[MAP_SIZE_H][MAP_SIZE_W] ={0};//map
     int key;
-    hidecursor();
     
-    pthread_t main;
-    pthread_create(&main, NULL,GameStart,NULL);
+    pthread_t main;//menamakan thread
+    pthread_create(&main, NULL,GameStart,NULL);//membuat thread
     system("color 7");              
             //console color
     while(1){
@@ -675,7 +662,7 @@ int main() {
         if(key == 't' || key == 'T') break;
         else {
             system("cls");
-            pthread_join(main,NULL);
+            pthread_join(main,NULL);//memanggil thread
             Sleep(1000/3);
             // system("cls");
         }
